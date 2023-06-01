@@ -103,7 +103,7 @@ function main() {
     scene.add(line)
 
 
-    // {
+    // {l
     //     const objLoader = new OBJLoader();
     //     objLoader.load('public/iskander2.obj', (root) => {
     //         scene.add(root);
