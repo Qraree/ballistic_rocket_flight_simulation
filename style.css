@@ -1,6 +1,7 @@
 html, body {
     margin: 0;
     height: 100%;
+    font-family: sans-serif;
 }
 #c {
     width: 100%;
@@ -22,4 +23,20 @@ html, body {
 
 }
 
+#data {
+    position: absolute;
+    top: 50px;
+    left: 10px;
+    font-size: 18px;
+}
 
+.tex {
+    position: absolute;
+    top: 350px;
+    left: 100px;
+
+    color: black;
+    font-size: 24px;
+
+    transition: 200ms all;
+}

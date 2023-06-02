@@ -10,6 +10,8 @@ let sky, sun;
 
 
 const startButton = document.querySelector('#start');
+const data = document.querySelector('#data');
+const tex = document.querySelector('.tex');
 
 let start = false;
 
@@ -67,7 +69,7 @@ function main() {
     const near = 0.1;
     const far = 10000;
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-    camera.position.set(0, 1, 20);
+    camera.position.set(-5, 1, 20);
     // camera.lookAt(0, 0, 0)
     camArray.push(camera);
 
@@ -186,7 +188,6 @@ function main() {
             rocket = root;
             rocketSystem.add(rocket)
             rocket.add(rocketCam)
-            // console.log(rocket)
 
             {
                 const fireRadius = 0.2;
@@ -199,21 +200,12 @@ function main() {
                 material0.setPerspective( camera.fov, height );
                 particleFireMesh0 = new THREE.Points( geometry0, material0 );
                 particleFireMesh0.rotation.x = 3.14
-                rocket.add( particleFireMesh0 );
             }
             requestAnimationFrame(render);
         });
 
 
     })
-
-
-
-
-    // console.log(rocket)
-
-
-
 
     let rocketVelocity = 10;
     let rocketAngle = 1.57;
@@ -269,28 +261,30 @@ function main() {
     let X;
     let trajectorySecondPart = false;
 
-    let step = 0.01;
+
+    const roundNum = (value, num=2) => {
+        return Math.round(value * 10 * num) / (10 * num)
+    }
 
 
+    let strLatex =  '\\begin{array}{cc} a & b \\\\ c & d \\end{array}';
+    let step = 0.05;
 
     let positionsArrays = line.geometry.attributes.position.array;
     let positionIndex = 0;
 
+    let currentString = '';
 
+    let activePartTime = false;
+    let activeTime;
 
     function render() {
-        time += step;
 
 
         ro = ro0 * Math.exp(-rocketSystem.position.y / 10000);
         M = rocketVelocity / a;
         cx = getCx(M);
         X = getX(cx, ro, rocketVelocity);
-
-
-
-
-
 
         if (resizeRendererToDisplaySize(renderer)) {
             const canvas = renderer.domElement;
@@ -300,16 +294,61 @@ function main() {
             particleFireMesh0.material.setPerspective( camera.fov, canvas.clientHeight );
         }
 
-        if (rocketSystem.position.y >= 0) {
-            console.log(`Угол - ${rocketAngle} | Масса - ${m0} | X - ${rocketSystem.position.x} | Y - ${rocketSystem.position.y} | Скорость - ${rocketVelocity}`)
-            console.log(rocketSystem.rotation.z)
+
+        const thetaLatexString = `\\theta = \\theta_{0} - 2(\\theta_{0} - \\theta_{k})\\frac{${Math.round(time)}-t_{a}}{t_{p} - t_{a}} + (\\theta_{0} - \\theta_{k})(\\frac{t-t_{a}}{t_{k} - t_{a}})^2 = ${Math.round(rocketAngle * 100) / 100}\\newline 
+        \\theta_{0} = ${finishAngle} \\ rad\\newline
+        \\theta_{k} = ${startAngle} \\ rad\\newline
+        t_{a} = ${ta} \\ c\\newline
+        t_{p} = ${tp} \\ c`
+
+        if (time > ta) {
+            currentString = thetaLatexString;
         }
 
+
+        const differentialLatexString = `\\frac{dv}{dt} = \\frac{Pcos(\\alpha) - X}{m} - gsin(\\theta) = ${roundNum((((P * Math.cos(alpha)) - X) / m0) - (g0 * Math.sin(rocketAngle)))}\\newline
+        \\ \\newline
+        v\\frac{d\\theta}{dt} = \\frac{1}{m}(Psin(\\alpha) + Y) - gsin(\\theta) = ${Math.round((((P * Math.sin(0) + Y) / (m0 * rocketVelocity)) - ((g0 * Math.cos(rocketAngle)) / rocketVelocity)) * 10000) / 10000}\\newline
+        \\ \\newline
+        \\frac{dh}{dt} = vsin(\\theta) = ${roundNum(rocketVelocity * Math.cos(rocketAngle))}\\newline
+        \\ \\newline
+        \\frac{dL}{dt} = \\frac{vcos(\\alpha)}{1 + \\frac{h}{R}} = ${roundNum(rocketVelocity * Math.sin(rocketAngle))}
+        `
+
+        const massLatexString =`
+            \\theta = \\theta_{k} = ${rocketAngle}\\newline
+            \\ \\newline
+            Mk = ${roundNum(mk)}
+            \\ \\newline
+            Mass = ${m0}
+        `
+
+
+
         if (start) {
+            time += step;
+            rocket.add(particleFireMesh0)
             if (time >= tp) {
+                tex.style.opacity = 0;
                 if (!activePart) {
+                    if (!activePartTime) {
+                        activePartTime = true
+                        activeTime = time;
+                    }
+                    console.log(activeTime)
+
+                    if (time >= activeTime+3) {
+                        tex.style.opacity = 1;
+                    }
+
+                    currentString = differentialLatexString;
+
                     rocketAngle += step * (((P * Math.sin(0) + Y) / (m0 * rocketVelocity)) - ((g0 * Math.cos(rocketAngle)) / rocketVelocity))
                 } else {
+                    if (time >= tp + 3) {
+                        tex.style.opacity = 1;
+                    }
+                    currentString = massLatexString;
                     rocketAngle = finishAngle;
                 }
             } else {
@@ -326,9 +365,17 @@ function main() {
             rocketSystem.position.y += step * rocketVelocity * Math.sin(rocketAngle)
             rocket.rotation.z = 1.57 - rocketAngle
             camera.rotation.set(0, 0, 0)
+
+            data.innerHTML =  `
+            <div class="data-wrapper">
+                <div>x - ${Math.round(rocketSystem.position.x * 100) / 100} м</div>
+                <div>y - ${Math.round(rocketSystem.position.y * 100) / 100} м</div>
+                <div>&theta; - ${Math.round(rocketAngle * 100) / 100} рад</div>
+                <div>v - ${Math.round(rocketVelocity * 100) / 100} м/c</div>
+                <div>t - ${Math.round(time * 100) / 100} c</div>
+            </div>
+            `
         }
-
-
 
         if (m0 >= mk) {
             m0 -= step *  mass_dot;
@@ -338,8 +385,14 @@ function main() {
             P = 0;
         }
 
-        // let delta = clock.getDelta();
+
+
+
         particleFireMesh0.material.update( step );
+
+        katex.render(currentString, tex, {
+            throwOnError: false
+        });
 
 
 
@@ -350,11 +403,7 @@ function main() {
             //
             // line.geometry.attributes.position.needsUpdate = true;
 
-
-
-
         renderer.render(scene, camera);
-
         requestAnimationFrame(render);
     }
 
