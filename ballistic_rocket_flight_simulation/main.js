@@ -2,33 +2,103 @@ import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GUI} from 'three/addons/libs/lil-gui.module.min.js';
 import {OBJLoader} from 'three/addons/loaders/OBJLoader.js';
+import {MTLLoader} from 'three/addons/loaders/MTLLoader.js';
+import { Sky } from 'three/addons/objects/Sky.js';
+import particleFire from 'three-particle-fire';
+particleFire.install( { THREE: THREE } );
+let sky, sun;
+
+
+const startButton = document.querySelector('#start');
+
+let start = false;
+
+startButton.addEventListener('click', () => {
+    start = true
+})
 
 function main() {
     const canvas = document.querySelector('#c');
     const renderer = new THREE.WebGLRenderer({antialias: true, canvas});
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 0.5;
+
+    const camArray = [];
+
+
+    function initSky() {
+
+        // Add Sky
+        sky = new Sky();
+        sky.scale.setScalar( 1450000 );
+        scene.add( sky );
+
+        sun = new THREE.Vector3();
+
+        /// GUI
+
+        const effectController = {
+            turbidity: 10,
+            rayleigh: 3,
+            mieCoefficient: 0.005,
+            mieDirectionalG: 0.7,
+            elevation: 2,
+            azimuth: 180,
+            exposure: renderer.toneMappingExposure
+        };
+
+        const uniforms = sky.material.uniforms;
+        uniforms[ 'turbidity' ].value = effectController.turbidity;
+        uniforms[ 'rayleigh' ].value = effectController.rayleigh;
+        uniforms[ 'mieCoefficient' ].value = effectController.mieCoefficient;
+        uniforms[ 'mieDirectionalG' ].value = effectController.mieDirectionalG;
+
+        const phi = THREE.MathUtils.degToRad( 90 - effectController.elevation );
+        const theta = THREE.MathUtils.degToRad( effectController.azimuth );
+
+        sun.setFromSphericalCoords( 1, phi, theta );
+        uniforms[ 'sunPosition' ].value.copy( sun );
+        renderer.toneMappingExposure = effectController.exposure;
+
+    }
 
     const fov = 45;
     const aspect = 2;
     const near = 0.1;
     const far = 10000;
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-    camera.position.set(0, 30, 20);
+    camera.position.set(0, 1, 20);
+    // camera.lookAt(0, 0, 0)
+    camArray.push(camera);
+
+    const rocketCam = new THREE.PerspectiveCamera(fov, aspect, near, far);
+    rocketCam.position.set(0, 0, 2);
+    rocketCam.rotation.set(0.8, 0, 0)
+
+    camArray.push(rocketCam);
 
     const fixedCamera = new THREE.PerspectiveCamera(fov, aspect, near, far);
     fixedCamera.position.set(1000, 0, 0)
 
-    const controls = new OrbitControls(fixedCamera, canvas);
+    camArray.push(rocketCam);
+
+    const controls = new OrbitControls(camera, canvas);
     controls.target.set(0, 5, 0);
     controls.update();
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color( "#4accea" );
 
+    const rocketSystem = new THREE.Object3D();
+    scene.add(rocketSystem)
+    initSky();
+    rocketSystem.add(camera)
+
     {
-        const planeSize = 600000;
+        const planeSize = 1400000;
 
         const loader = new THREE.TextureLoader();
-        const texture = loader.load('https://threejs.org/manual/examples/resources/images/checker.png');
+        const texture = loader.load('/ground_texture.jpg');
         texture.wrapS = THREE.RepeatWrapping;
         texture.wrapT = THREE.RepeatWrapping;
         texture.magFilter = THREE.NearestFilter;
@@ -45,6 +115,7 @@ function main() {
         scene.add(mesh);
     }
     let box;
+
     {
         const cubeSize = 4;
         const cubeGeo = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
@@ -52,9 +123,8 @@ function main() {
         box = new THREE.Mesh(cubeGeo, cubeMat);
         box.position.set(cubeSize + 1, cubeSize / 2, 0);
         scene.add(box);
-        box.add(camera);
-    }
 
+    }
 
     class ColorGUIHelper {
         constructor(object, prop) {
@@ -101,16 +171,46 @@ function main() {
 
     let line = new THREE.Line( lineGeometry,  lineMaterial );
     scene.add(line)
+    let rocket;
+
+    let particleFireMesh0;
 
 
-    // {l
-    //     const objLoader = new OBJLoader();
-    //     objLoader.load('public/iskander2.obj', (root) => {
-    //         scene.add(root);
-    //         root.position.set(0, 0, 0)
-    //         root.rotation.set(0,0,1.57)
-    //     });
-    // }
+    const objLoader = new OBJLoader();
+    const mtlLoader = new MTLLoader();
+    mtlLoader.load('/diplom_rocket.mtl', (mtl) => {
+        mtl.preload();
+        objLoader.setMaterials(mtl);
+
+        objLoader.load('/diplom_rocket.obj', (root) => {
+            rocket = root;
+            rocketSystem.add(rocket)
+            rocket.add(rocketCam)
+            // console.log(rocket)
+
+            {
+                const fireRadius = 0.2;
+                const fireHeight = 1.5;
+                const particleCount = 800;
+                const height = window.innerHeight;
+
+                const geometry0 = new particleFire.Geometry( fireRadius, fireHeight, particleCount );
+                const material0 = new particleFire.Material( { color: 0xff2200 } );
+                material0.setPerspective( camera.fov, height );
+                particleFireMesh0 = new THREE.Points( geometry0, material0 );
+                particleFireMesh0.rotation.x = 3.14
+                rocket.add( particleFireMesh0 );
+            }
+            requestAnimationFrame(render);
+        });
+
+
+    })
+
+
+
+
+    // console.log(rocket)
 
 
 
@@ -176,13 +276,17 @@ function main() {
     let positionsArrays = line.geometry.attributes.position.array;
     let positionIndex = 0;
 
+
+
     function render() {
         time += step;
 
-        ro = ro0 * Math.exp(-box.position.y / 10000);
+
+        ro = ro0 * Math.exp(-rocketSystem.position.y / 10000);
         M = rocketVelocity / a;
         cx = getCx(M);
         X = getX(cx, ro, rocketVelocity);
+
 
 
 
@@ -192,39 +296,50 @@ function main() {
             const canvas = renderer.domElement;
             camera.aspect = canvas.clientWidth / canvas.clientHeight;
             camera.updateProjectionMatrix();
+
+            particleFireMesh0.material.setPerspective( camera.fov, canvas.clientHeight );
         }
 
-        if (box.position.y >=0) {
-            console.log(`Угол - ${rocketAngle} | Масса - ${m0} | X - ${box.position.x} | Y - ${box.position.y} | Скорость - ${rocketVelocity}`)
-            console.log(box.rotation.z)
+        if (rocketSystem.position.y >= 0) {
+            console.log(`Угол - ${rocketAngle} | Масса - ${m0} | X - ${rocketSystem.position.x} | Y - ${rocketSystem.position.y} | Скорость - ${rocketVelocity}`)
+            console.log(rocketSystem.rotation.z)
         }
 
-        if (time >= tp) {
-            if (!activePart) {
-                rocketAngle += step * (((P * Math.sin(0) + Y) / (m0 * rocketVelocity)) - ((g0 * Math.cos(rocketAngle)) / rocketVelocity))
+        if (start) {
+            if (time >= tp) {
+                if (!activePart) {
+                    rocketAngle += step * (((P * Math.sin(0) + Y) / (m0 * rocketVelocity)) - ((g0 * Math.cos(rocketAngle)) / rocketVelocity))
+                } else {
+                    rocketAngle = finishAngle;
+                }
             } else {
-                rocketAngle = finishAngle;
+                if (time < ta) {
+                    rocketAngle = startAngle
+                } else {
+                    rocketAngle = startAngle - (2 * (startAngle - finishAngle) * relativeTime(time)) + ((startAngle - finishAngle) * Math.pow(relativeTime(time), 2))
+                }
             }
-        } else {
-            if (time < ta) {
-                rocketAngle = startAngle
-            } else {
-                rocketAngle = startAngle - (2 * (startAngle - finishAngle) * relativeTime(time)) + ((startAngle - finishAngle) * Math.pow(relativeTime(time), 2))
-            }
+
+
+            rocketVelocity += step * ((((P * Math.cos(alpha)) - X) / m0) - (g0 * Math.sin(rocketAngle)))
+            rocketSystem.position.x += step * rocketVelocity * Math.cos(rocketAngle)
+            rocketSystem.position.y += step * rocketVelocity * Math.sin(rocketAngle)
+            rocket.rotation.z = 1.57 - rocketAngle
+            camera.rotation.set(0, 0, 0)
         }
 
 
-        rocketVelocity += step * ((((P * Math.cos(alpha)) - X) / m0) - (g0 * Math.sin(rocketAngle)))
-        box.position.x += step * rocketVelocity * Math.cos(rocketAngle)
-        box.position.y += step * rocketVelocity * Math.sin(rocketAngle)
-        box.rotation.z = 1.57 - rocketAngle
 
         if (m0 >= mk) {
             m0 -= step *  mass_dot;
         } else {
             activePart = false;
+            rocket.remove(particleFireMesh0)
             P = 0;
         }
+
+        // let delta = clock.getDelta();
+        particleFireMesh0.material.update( step );
 
 
 
@@ -238,12 +353,12 @@ function main() {
 
 
 
-        renderer.render(scene, fixedCamera);
+        renderer.render(scene, camera);
 
         requestAnimationFrame(render);
     }
 
-    requestAnimationFrame(render);
+
 }
 
 main();
