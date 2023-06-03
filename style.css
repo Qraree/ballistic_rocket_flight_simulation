@@ -9,7 +9,7 @@ html, body {
     display: block;
 }
 
-#start {
+#start, #next-cam {
     position: absolute;
     top: 10px;
     left: 10px;
@@ -21,6 +21,10 @@ html, body {
     border-radius: 5px;
     cursor: pointer;
 
+}
+
+#next-cam {
+    left: 70px;
 }
 
 #data {
@@ -39,4 +43,11 @@ html, body {
     font-size: 24px;
 
     transition: 200ms all;
+}
+
+#current-camera {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+
 }

@@ -10,8 +10,17 @@ let sky, sun;
 
 
 const startButton = document.querySelector('#start');
+const nextCamButton = document.querySelector('#next-cam');
+
 const data = document.querySelector('#data');
 const tex = document.querySelector('.tex');
+const currentCamNote = document.querySelector('#current-camera');
+
+const a_array = [340.3, 338.4, 336.4, 334.5, 332.5, 330.6, 328.6, 324.6, 320.6, 316.5, 312.3, 308.1, 303.9, 299.6, 295.2, 295.1, 295.1, 295.1, 295.1, 295.1, 297.7, 300.4, 303, 310.1, 317.2, 329.8, 315.1, 282.5];
+const h_array = [0, 500, 1000, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000, 14000, 16000, 18000, 20000, 24000, 28000, 32000, 36000, 40000, 50000, 60000, 80000]
+
+console.log(a_array.length)
+console.log(h_array.length)
 
 let start = false;
 
@@ -67,22 +76,38 @@ function main() {
     const fov = 45;
     const aspect = 2;
     const near = 0.1;
-    const far = 10000;
+    const far = 1000;
+    const ellipsisFar = 4000000
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-    camera.position.set(-5, 1, 20);
+    camera.position.set(-5, 4, 15);
     // camera.lookAt(0, 0, 0)
-    camArray.push(camera);
+    camArray.push({cam: camera, caption: "Rocket main camera"});
 
     const rocketCam = new THREE.PerspectiveCamera(fov, aspect, near, far);
     rocketCam.position.set(0, 0, 2);
     rocketCam.rotation.set(0.8, 0, 0)
+    camArray.push({cam: rocketCam, caption: "Rocket pointer camera"});
 
-    camArray.push(rocketCam);
+    const ellipsisCamera = new THREE.PerspectiveCamera(fov, aspect, near, ellipsisFar);
+    // ellipsisCamera.position.set(0, 3, 100);
+    ellipsisCamera.position.set(285000, 0, 380000);
+    // rocketCam.rotation.set(0.8, 0, 0)
+    camArray.push({cam: ellipsisCamera, caption: "Fixed ground camera"});
+
 
     const fixedCamera = new THREE.PerspectiveCamera(fov, aspect, near, far);
     fixedCamera.position.set(1000, 0, 0)
 
-    camArray.push(rocketCam);
+    const nozzleCamera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+    nozzleCamera.position.set(-1, -2, 2)
+    nozzleCamera.rotation.set(0.68, 0,  0)
+    camArray.push({cam: nozzleCamera, caption: "Rocket nozzle camera"})
+
+    const boxCam = new THREE.PerspectiveCamera(fov, aspect, near, far);
+    camArray.push({cam: boxCam, caption: "Box camera"})
+    boxCam.position.set(0, 5, 0)
+    boxCam.rotation.set(1.57, 0, 0)
+
 
     const controls = new OrbitControls(camera, canvas);
     controls.target.set(0, 5, 0);
@@ -90,6 +115,7 @@ function main() {
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color( "#4accea" );
+    scene.add(ellipsisCamera);
 
     const rocketSystem = new THREE.Object3D();
     scene.add(rocketSystem)
@@ -114,6 +140,7 @@ function main() {
         });
         const mesh = new THREE.Mesh(planeGeo, planeMat);
         mesh.rotation.x = Math.PI * -.5;
+
         scene.add(mesh);
     }
     let box;
@@ -125,8 +152,26 @@ function main() {
         box = new THREE.Mesh(cubeGeo, cubeMat);
         box.position.set(cubeSize + 1, cubeSize / 2, 0);
         scene.add(box);
-
+        box.add(boxCam)
     }
+
+    {
+        const cubeSize = 4;
+        const cubeGeo = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+        const cubeMat = new THREE.MeshPhongMaterial({color: 'rgba(229,11,11,0.68)'});
+        box = new THREE.Mesh(cubeGeo, cubeMat);
+        box.position.set(570000, 0, 0);
+        scene.add(box);
+    }
+
+    // {
+    //     const cubeSize = 4;
+    //     const cubeGeo = new THREE.BoxGeometry(cubeSize*1000, cubeSize*1000, cubeSize*100);
+    //     const cubeMat = new THREE.MeshPhongMaterial({color: 'rgba(229,11,11,0.68)'});
+    //     box = new THREE.Mesh(cubeGeo, cubeMat);
+    //     box.position.set(0, 0, 0);
+    //     rocketSystem.add(box);
+    // }
 
     class ColorGUIHelper {
         constructor(object, prop) {
@@ -171,8 +216,7 @@ function main() {
     const lineMaterial = new THREE.LineBasicMaterial( { color: "blue", linewidth: 2 } );
 
 
-    let line = new THREE.Line( lineGeometry,  lineMaterial );
-    scene.add(line)
+
     let rocket;
 
     let particleFireMesh0;
@@ -188,6 +232,7 @@ function main() {
             rocket = root;
             rocketSystem.add(rocket)
             rocket.add(rocketCam)
+            rocket.add(nozzleCamera)
 
             {
                 const fireRadius = 0.2;
@@ -203,27 +248,8 @@ function main() {
             }
             requestAnimationFrame(render);
         });
-
-
     })
 
-    let rocketVelocity = 10;
-    let rocketAngle = 1.57;
-    let rocketX = 0;
-    let rocketY = 0;
-
-    const g0 = 9.8;
-    const finishAngle = 0.68;
-    const startAngle = 1.57;
-    let m0 = 3800;
-    let ta = 4;
-    let tp = 40;
-    let mut = 0.7;
-    let tvp = 3.4;
-    let mk = m0 * (1 - mut);
-    const S = 0.92;
-
-    let activePart = true;
 
     const relativeTime = (time) => {
         return (time - ta) / (tp - ta);
@@ -231,6 +257,19 @@ function main() {
 
     const getX = (Cx, ro, V) => {
         return 0.5 * Cx * ro * S * Math.pow(V, 2)
+    }
+
+    const getA = (h) => {
+
+        if (h > 80000) {
+            return 282.5
+        }
+
+        for (let i = 0; i < h_array.length; i++) {
+            if (h <= h_array[i]) {
+                return a_array[i]
+            }
+        }
     }
 
     const getY = (Cy, ro, V, alpha) => {
@@ -247,8 +286,46 @@ function main() {
         }
     }
 
-    let mass;
-    let mass_dot = 40;
+    const roundNum = (value, num=2) => {
+        return Math.round(value * 10 * num) / (10 * num)
+    }
+
+    const rad = 6371210;
+
+    const dir = new THREE.Vector3( 10, 2, 0 );
+    dir.normalize();
+
+    const origin = new THREE.Vector3( 285000, -rad, 0 );
+    const length = 10;
+    const hex = 0xffff00;
+
+    const arrowHelper = new THREE.ArrowHelper( dir, origin, length, hex );
+    // scene.add(arrowHelper)
+
+
+
+    ///////////////////
+    /// ROCKET DATA ///
+    ///////////////////
+
+    let rocketVelocity = 10;
+    let rocketAngle = 1.57;
+
+    const g0 = 9.8;
+    const finishAngle = 0.68;
+    const startAngle = 1.57;
+    let m0 = 3800;
+    let ta = 4;
+    let tp = 40;
+    let mut = 0.7;
+    let tvp = 3.4;
+    let mk = m0 * (1 - mut);
+    const S = 0.92;
+
+    let activePart = true;
+
+
+    const mass_dot = 40;
     let time = 0;
     let P = 120000;
     let a = 343; // Исправить
@@ -259,18 +336,21 @@ function main() {
     let M;
     let cx;
     let X;
+    let p;
+    const IP = 2559.5
+    const IO = 2324.7
+
+    const p0 = Math.pow(10, 5);
     let trajectorySecondPart = false;
 
+    let line;
+    let secondLine;
 
-    const roundNum = (value, num=2) => {
-        return Math.round(value * 10 * num) / (10 * num)
-    }
 
 
     let strLatex =  '\\begin{array}{cc} a & b \\\\ c & d \\end{array}';
     let step = 0.05;
 
-    let positionsArrays = line.geometry.attributes.position.array;
     let positionIndex = 0;
 
     let currentString = '';
@@ -278,13 +358,43 @@ function main() {
     let activePartTime = false;
     let activeTime;
 
+    const computeTrajectory = () => {
+        const yArray = [];
+        const xArray = [];
+
+        while (true) {
+
+        }
+
+
+    }
+
+    let currentCamera = camera;
+    let currentCameraIndex = 0;
+    currentCamNote.innerHTML = `${camArray[currentCameraIndex].caption}`
+
+
+
+    const changeCamera = () => {
+        currentCameraIndex += 1
+        if (camArray[currentCameraIndex]) {
+            currentCamera = camArray[currentCameraIndex].cam
+            currentCamNote.innerHTML = `${camArray[currentCameraIndex].caption}`
+        } else {
+            currentCameraIndex = 0;
+            currentCamera = camArray[0].cam;
+            currentCamNote.innerHTML = `${camArray[currentCameraIndex].caption}`
+        }
+    }
+
+    nextCamButton.addEventListener('click', changeCamera);
+
+    let drawLine = false;
+    let drawSecondLine = false;
+
+
     function render() {
 
-
-        ro = ro0 * Math.exp(-rocketSystem.position.y / 10000);
-        M = rocketVelocity / a;
-        cx = getCx(M);
-        X = getX(cx, ro, rocketVelocity);
 
         if (resizeRendererToDisplaySize(renderer)) {
             const canvas = renderer.domElement;
@@ -308,11 +418,11 @@ function main() {
 
         const differentialLatexString = `\\frac{dv}{dt} = \\frac{Pcos(\\alpha) - X}{m} - gsin(\\theta) = ${roundNum((((P * Math.cos(alpha)) - X) / m0) - (g0 * Math.sin(rocketAngle)))}\\newline
         \\ \\newline
-        v\\frac{d\\theta}{dt} = \\frac{1}{m}(Psin(\\alpha) + Y) - gsin(\\theta) = ${Math.round((((P * Math.sin(0) + Y) / (m0 * rocketVelocity)) - ((g0 * Math.cos(rocketAngle)) / rocketVelocity)) * 10000) / 10000}\\newline
+        \\frac{d\\theta}{dt} = \\frac{1}{m}(Psin(\\alpha) + Y) - gsin(\\theta) = ${Math.round((((P * Math.sin(0) + Y) / (m0 * rocketVelocity)) - ((g0 * Math.cos(rocketAngle)) / rocketVelocity)) * 10000) / 10000}\\newline
         \\ \\newline
-        \\frac{dh}{dt} = vsin(\\theta) = ${roundNum(rocketVelocity * Math.cos(rocketAngle))}\\newline
+        \\frac{dh}{dt} = vsin(\\theta) = ${roundNum(rocketVelocity * Math.sin(rocketAngle))}\\newline
         \\ \\newline
-        \\frac{dL}{dt} = \\frac{vcos(\\alpha)}{1 + \\frac{h}{R}} = ${roundNum(rocketVelocity * Math.sin(rocketAngle))}
+        \\frac{dL}{dt} = \\frac{vcos(\\theta)}{1 + \\frac{h}{R}} = ${roundNum(rocketVelocity * Math.cos(rocketAngle))}
         `
 
         const massLatexString =`
@@ -323,19 +433,33 @@ function main() {
             Mass = ${m0}
         `
 
-
+        arrowHelper.setLength(Math.sqrt(Math.pow((Math.abs(rocketSystem.position.x - 285000)), 2) + (Math.pow((rocketSystem.position.y + rad), 2))), 10000, 5000)
+        arrowHelper.setDirection(new THREE.Vector3( rocketSystem.position.x - 285000, rocketSystem.position.y+rad, 0 ).normalize())
 
         if (start) {
             time += step;
+
+            p = p0 * Math.exp(-rocketSystem.position.y / 10000)
+            ro = ro0 * Math.exp(-rocketSystem.position.y / 10000);
+            // P = (IP - ((IP - IO)*(p / p0))) * mass_dot
+            P = 120000;
+            a = getA(rocketSystem.position.y)
+            M = rocketVelocity / a;
+            cx = getCx(M);
+            X = getX(cx, ro, rocketVelocity);
+
+
+
+
             rocket.add(particleFireMesh0)
             if (time >= tp) {
                 tex.style.opacity = 0;
                 if (!activePart) {
+                    P = 0;
                     if (!activePartTime) {
                         activePartTime = true
                         activeTime = time;
                     }
-                    console.log(activeTime)
 
                     if (time >= activeTime+3) {
                         tex.style.opacity = 1;
@@ -359,11 +483,10 @@ function main() {
                 }
             }
 
-
             rocketVelocity += step * ((((P * Math.cos(alpha)) - X) / m0) - (g0 * Math.sin(rocketAngle)))
             rocketSystem.position.x += step * rocketVelocity * Math.cos(rocketAngle)
             rocketSystem.position.y += step * rocketVelocity * Math.sin(rocketAngle)
-            rocket.rotation.z = 1.57 - rocketAngle
+            rocket.rotation.z = rocketAngle - 1.57
             camera.rotation.set(0, 0, 0)
 
             data.innerHTML =  `
@@ -373,6 +496,8 @@ function main() {
                 <div>&theta; - ${Math.round(rocketAngle * 100) / 100} рад</div>
                 <div>v - ${Math.round(rocketVelocity * 100) / 100} м/c</div>
                 <div>t - ${Math.round(time * 100) / 100} c</div>
+                <div>Тяга - ${Math.round(P * 100) / 100} H</div>
+                <div>Скорость звука - ${Math.round(a * 100) / 100} H</div>
             </div>
             `
         }
@@ -385,10 +510,45 @@ function main() {
             P = 0;
         }
 
+        if (rocketSystem.position.y > 95000 && !drawLine) {
+            const points = [];
+            points.push( new THREE.Vector3( rocketSystem.position.x, rocketSystem.position.y, 0 ) );
+            points.push( new THREE.Vector3( 285000, -rad, 0 ) );
+
+            const geometry = new THREE.BufferGeometry().setFromPoints( points );
+            const material = new THREE.LineBasicMaterial( { color: 0x0000ff } );
+            line = new THREE.Line( geometry, material );
+            scene.add( line );
+
+            scene.add(arrowHelper)
+            drawLine = true
+
+            let v = rocketVelocity / 1000
+            let l = 2 * rad * (Math.atan((Math.pow(v, 2) * Math.tan(rocketAngle)) / ((62.57 * (1 + (Math.pow(Math.tan(rocketAngle), 2))) - Math.pow(v, 2)))))
+            console.log(l)
+            console.log(rocketSystem.position.x + l)
+
+            const secondPoints = []
+            secondPoints.push( new THREE.Vector3( rocketSystem.position.x + l - 15000, 95000, 0 ) );
+            secondPoints.push( new THREE.Vector3( 285000, -rad, 0 ) );
+
+            const secondGeometry = new THREE.BufferGeometry().setFromPoints( secondPoints );
+            secondLine = new THREE.Line( secondGeometry, material );
+            scene.add( secondLine );
 
 
+        }
+
+        if (rocketSystem.position.y < 95000 && drawLine) {
+            scene.remove(line)
+            scene.remove(secondLine)
+            scene.remove(arrowHelper)
+            drawLine = true;
+        }
 
         particleFireMesh0.material.update( step );
+
+
 
         katex.render(currentString, tex, {
             throwOnError: false
@@ -403,7 +563,7 @@ function main() {
             //
             // line.geometry.attributes.position.needsUpdate = true;
 
-        renderer.render(scene, camera);
+        renderer.render(scene, currentCamera);
         requestAnimationFrame(render);
     }
 
