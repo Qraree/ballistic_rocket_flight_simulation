@@ -11,6 +11,10 @@ let sky, sun;
 
 const startButton = document.querySelector('#start');
 const nextCamButton = document.querySelector('#next-cam');
+const ellipsisCameraButton = document.querySelector('#ellipsis-cam');
+const nozzleCameraButton = document.querySelector('#nozzle-cam');
+const mainCameraButton = document.querySelector('#main-cam');
+
 
 const data = document.querySelector('#data');
 const tex = document.querySelector('.tex');
@@ -19,8 +23,7 @@ const currentCamNote = document.querySelector('#current-camera');
 const a_array = [340.3, 338.4, 336.4, 334.5, 332.5, 330.6, 328.6, 324.6, 320.6, 316.5, 312.3, 308.1, 303.9, 299.6, 295.2, 295.1, 295.1, 295.1, 295.1, 295.1, 297.7, 300.4, 303, 310.1, 317.2, 329.8, 315.1, 282.5];
 const h_array = [0, 500, 1000, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000, 14000, 16000, 18000, 20000, 24000, 28000, 32000, 36000, 40000, 50000, 60000, 80000]
 
-console.log(a_array.length)
-console.log(h_array.length)
+
 
 let start = false;
 
@@ -76,37 +79,26 @@ function main() {
     const fov = 45;
     const aspect = 2;
     const near = 0.1;
-    const far = 1000;
-    const ellipsisFar = 4000000
+    const far = 5000;
+    const ellipsisFar = 4800000
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-    camera.position.set(-5, 4, 15);
+    camera.position.set(-5, 3, 16);
     // camera.lookAt(0, 0, 0)
     camArray.push({cam: camera, caption: "Rocket main camera"});
 
-    const rocketCam = new THREE.PerspectiveCamera(fov, aspect, near, far);
-    rocketCam.position.set(0, 0, 2);
-    rocketCam.rotation.set(0.8, 0, 0)
-    camArray.push({cam: rocketCam, caption: "Rocket pointer camera"});
-
-    const ellipsisCamera = new THREE.PerspectiveCamera(fov, aspect, near, ellipsisFar);
-    // ellipsisCamera.position.set(0, 3, 100);
-    ellipsisCamera.position.set(285000, 0, 380000);
-    // rocketCam.rotation.set(0.8, 0, 0)
-    camArray.push({cam: ellipsisCamera, caption: "Fixed ground camera"});
-
-
-    const fixedCamera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-    fixedCamera.position.set(1000, 0, 0)
 
     const nozzleCamera = new THREE.PerspectiveCamera(fov, aspect, near, far);
     nozzleCamera.position.set(-1, -2, 2)
     nozzleCamera.rotation.set(0.68, 0,  0)
     camArray.push({cam: nozzleCamera, caption: "Rocket nozzle camera"})
 
-    const boxCam = new THREE.PerspectiveCamera(fov, aspect, near, far);
-    camArray.push({cam: boxCam, caption: "Box camera"})
-    boxCam.position.set(0, 5, 0)
-    boxCam.rotation.set(1.57, 0, 0)
+
+    const ellipsisCamera = new THREE.PerspectiveCamera(fov, aspect, near, ellipsisFar);
+    // ellipsisCamera.position.set(0, 3, 100);
+    ellipsisCamera.position.set(180000, 0, 450000);
+    camArray.push({cam: ellipsisCamera, caption: "Fixed ground camera"});
+
+
 
 
     const controls = new OrbitControls(camera, canvas);
@@ -143,35 +135,8 @@ function main() {
 
         scene.add(mesh);
     }
-    let box;
 
-    {
-        const cubeSize = 4;
-        const cubeGeo = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
-        const cubeMat = new THREE.MeshPhongMaterial({color: 'rgba(229,11,11,0.68)'});
-        box = new THREE.Mesh(cubeGeo, cubeMat);
-        box.position.set(cubeSize + 1, cubeSize / 2, 0);
-        scene.add(box);
-        box.add(boxCam)
-    }
 
-    {
-        const cubeSize = 4;
-        const cubeGeo = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
-        const cubeMat = new THREE.MeshPhongMaterial({color: 'rgba(229,11,11,0.68)'});
-        box = new THREE.Mesh(cubeGeo, cubeMat);
-        box.position.set(570000, 0, 0);
-        scene.add(box);
-    }
-
-    // {
-    //     const cubeSize = 4;
-    //     const cubeGeo = new THREE.BoxGeometry(cubeSize*1000, cubeSize*1000, cubeSize*100);
-    //     const cubeMat = new THREE.MeshPhongMaterial({color: 'rgba(229,11,11,0.68)'});
-    //     box = new THREE.Mesh(cubeGeo, cubeMat);
-    //     box.position.set(0, 0, 0);
-    //     rocketSystem.add(box);
-    // }
 
     class ColorGUIHelper {
         constructor(object, prop) {
@@ -208,12 +173,7 @@ function main() {
         return needResize;
     }
 
-    const MAX_POINTS = 100000;
-    const lineGeometry = new THREE.BufferGeometry();
-    const positions = new Float32Array( MAX_POINTS * 3 );
-    lineGeometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
 
-    const lineMaterial = new THREE.LineBasicMaterial( { color: "blue", linewidth: 2 } );
 
 
 
@@ -231,7 +191,6 @@ function main() {
         objLoader.load('/diplom_rocket.obj', (root) => {
             rocket = root;
             rocketSystem.add(rocket)
-            rocket.add(rocketCam)
             rocket.add(nozzleCamera)
 
             {
@@ -297,10 +256,9 @@ function main() {
 
     const origin = new THREE.Vector3( 285000, -rad, 0 );
     const length = 10;
-    const hex = 0xffff00;
+    const hex = `#000000`;
 
     const arrowHelper = new THREE.ArrowHelper( dir, origin, length, hex );
-    // scene.add(arrowHelper)
 
 
 
@@ -327,7 +285,7 @@ function main() {
 
     const mass_dot = 40;
     let time = 0;
-    let P = 120000;
+    let P = 110000;
     let a = 343; // Исправить
     let ro0 = 1.23;
     let alpha = 0;
@@ -340,38 +298,70 @@ function main() {
     const IP = 2559.5
     const IO = 2324.7
 
+    /////////////////////////
+    // ELLIPSIS PARAMETERS //
+    /////////////////////////
+
+    let vk;
+    let eccentricity;
+    let focal;
+    let beta;
+
     const p0 = Math.pow(10, 5);
     let trajectorySecondPart = false;
 
     let line;
     let secondLine;
-
+    let dashedLine;
 
 
     let strLatex =  '\\begin{array}{cc} a & b \\\\ c & d \\end{array}';
     let step = 0.05;
+
+
+    // let MAX_POINTS = 100000;
+    // const positions = new Float32Array( MAX_POINTS * 3 );
+    // lineGeometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
+    // let drawCount = 2;
+    // lineGeometry.setDrawRange( 0, drawCount );
+    // const material = new THREE.LineBasicMaterial( { color: 0xff0000, linewidth: 2 } );
+    // let trajectoryLine = new THREE.Line( lineGeometry,  material );
+    // scene.add(trajectoryLine)
+    // let positionsArrays = trajectoryLine.geometry.attributes.position.array;
+
+
+    // scene.add(trajectoryLine);
 
     let positionIndex = 0;
 
     let currentString = '';
 
     let activePartTime = false;
+    let ellipticPartTime = false
     let activeTime;
-
-    const computeTrajectory = () => {
-        const yArray = [];
-        const xArray = [];
-
-        while (true) {
-
-        }
+    let ellipticTime;
 
 
-    }
 
     let currentCamera = camera;
     let currentCameraIndex = 0;
     currentCamNote.innerHTML = `${camArray[currentCameraIndex].caption}`
+
+
+
+    mainCameraButton.addEventListener('click', () => {
+        currentCamera = camera
+    })
+    nozzleCameraButton.addEventListener('click', () => {
+        currentCamera = nozzleCamera
+    })
+
+    ellipsisCameraButton.addEventListener('click', () => {
+        currentCamera = ellipsisCamera
+    })
+
+
+
 
 
 
@@ -392,6 +382,11 @@ function main() {
     let drawLine = false;
     let drawSecondLine = false;
 
+    let rocketX = 0;
+    let rocketY = 0;
+    let rocketZ = 0;
+    let trajectoryLine;
+
 
     function render() {
 
@@ -405,41 +400,59 @@ function main() {
         }
 
 
-        const thetaLatexString = `\\theta = \\theta_{0} - 2(\\theta_{0} - \\theta_{k})\\frac{${Math.round(time)}-t_{a}}{t_{p} - t_{a}} + (\\theta_{0} - \\theta_{k})(\\frac{t-t_{a}}{t_{k} - t_{a}})^2 = ${Math.round(rocketAngle * 100) / 100}\\newline 
-        \\theta_{0} = ${finishAngle} \\ rad\\newline
-        \\theta_{k} = ${startAngle} \\ rad\\newline
+        const thetaLatexString = `
+        \\theta = \\theta_{0} - 2(\\theta_{0} - \\theta_{k})\\frac{${Math.round(time)}-t_{a}}{t_{p} - t_{a}} + (\\theta_{0} - \\theta_{k})(\\frac{t-t_{a}}{t_{k} - t_{a}})^2 = ${Math.round(rocketAngle * 100) / 100}\\newline 
+        \\ \\newline
+        \\theta_{0} = ${startAngle} \\ rad\\newline
+        \\ \\newline
+        \\theta_{k} = ${finishAngle} \\ rad\\newline
+        \\ \\newline
         t_{a} = ${ta} \\ c\\newline
+        \\ \\newline
         t_{p} = ${tp} \\ c`
 
-        if (time > ta) {
+        if (time > ta && time < tp) {
             currentString = thetaLatexString;
         }
 
 
-        const differentialLatexString = `\\frac{dv}{dt} = \\frac{Pcos(\\alpha) - X}{m} - gsin(\\theta) = ${roundNum((((P * Math.cos(alpha)) - X) / m0) - (g0 * Math.sin(rocketAngle)))}\\newline
+        const differentialLatexString = `\\frac{dv}{dt} = \\frac{Pcos\\alpha - X}{m} - gsin \\ \\theta = ${roundNum((((P * Math.cos(alpha)) - X) / m0) - (g0 * Math.sin(rocketAngle)))}\\newline
         \\ \\newline
-        \\frac{d\\theta}{dt} = \\frac{1}{m}(Psin(\\alpha) + Y) - gsin(\\theta) = ${Math.round((((P * Math.sin(0) + Y) / (m0 * rocketVelocity)) - ((g0 * Math.cos(rocketAngle)) / rocketVelocity)) * 10000) / 10000}\\newline
+        \\frac{d\\theta}{dt} = \\frac{1}{m}(Psin\\alpha + Y) - gsin \\ \\theta = ${Math.round((((P * Math.sin(0) + Y) / (m0 * rocketVelocity)) - ((g0 * Math.cos(rocketAngle)) / rocketVelocity)) * 10000) / 10000}\\newline
         \\ \\newline
-        \\frac{dh}{dt} = vsin(\\theta) = ${roundNum(rocketVelocity * Math.sin(rocketAngle))}\\newline
+        \\frac{dh}{dt} = vsin \\ \\theta = ${roundNum(rocketVelocity * Math.sin(rocketAngle))}\\newline
         \\ \\newline
-        \\frac{dL}{dt} = \\frac{vcos(\\theta)}{1 + \\frac{h}{R}} = ${roundNum(rocketVelocity * Math.cos(rocketAngle))}
+        \\frac{dL}{dt} = \\frac{vcos \\ \\theta}{1 + \\frac{h}{R}} = ${roundNum(rocketVelocity * Math.cos(rocketAngle))}
+        `
+        let radVectorLength = Math.sqrt(Math.pow((Math.abs(rocketSystem.position.x - 285000)), 2) + (Math.pow((rocketSystem.position.y + rad), 2)))
+
+        const ellipticLatexString = `
+        v_{k} = \\frac{V_{k}^2(R+h_{k})}{\\pi_{0}} = ${roundNum(vk, 4)}\\newline
+        \\ \\newline
+        \\beta_{B} = arctan\\frac{v_{k}tg\\theta_{k}}{1+tg^2\\theta_{k}-v_{k}} = ${roundNum(beta, 4)}\\newline
+        \\ \\newline
+        p = v_{k}(R+h_{k})cos^2\\theta_{k} = ${roundNum(focal)}\\newline
+        \\ \\newline
+        e = \\sqrt{(1-v_{k})^2cos^2\\theta_{k}+sin^2\\theta_{k}} = ${roundNum(eccentricity)}\\newline
+        \\ \\newline
+        r = \\frac{p}{1-e\\cos(\\beta_{B}-\\beta)} = ${roundNum(radVectorLength)} м
         `
 
         const massLatexString =`
             \\theta = \\theta_{k} = ${rocketAngle}\\newline
             \\ \\newline
-            Mk = ${roundNum(mk)}
+            "Сухая" \\ масса = ${roundNum(mk)}\\newline
             \\ \\newline
-            Mass = ${m0}
+            Масса = ${m0}
         `
 
-        arrowHelper.setLength(Math.sqrt(Math.pow((Math.abs(rocketSystem.position.x - 285000)), 2) + (Math.pow((rocketSystem.position.y + rad), 2))), 10000, 5000)
+        arrowHelper.setLength(radVectorLength, 10000, 5000)
         arrowHelper.setDirection(new THREE.Vector3( rocketSystem.position.x - 285000, rocketSystem.position.y+rad, 0 ).normalize())
 
         if (start) {
             time += step;
 
-            p = p0 * Math.exp(-rocketSystem.position.y / 10000)
+            p = p0 * Math.exp(-rocketSystem.position.y / 10000);
             ro = ro0 * Math.exp(-rocketSystem.position.y / 10000);
             // P = (IP - ((IP - IO)*(p / p0))) * mass_dot
             P = 120000;
@@ -456,6 +469,7 @@ function main() {
                 tex.style.opacity = 0;
                 if (!activePart) {
                     P = 0;
+
                     if (!activePartTime) {
                         activePartTime = true
                         activeTime = time;
@@ -463,16 +477,19 @@ function main() {
 
                     if (time >= activeTime+3) {
                         tex.style.opacity = 1;
+                        currentString = differentialLatexString;
                     }
 
-                    currentString = differentialLatexString;
+
 
                     rocketAngle += step * (((P * Math.sin(0) + Y) / (m0 * rocketVelocity)) - ((g0 * Math.cos(rocketAngle)) / rocketVelocity))
                 } else {
                     if (time >= tp + 3) {
                         tex.style.opacity = 1;
+                        currentString = massLatexString;
                     }
-                    currentString = massLatexString;
+
+
                     rocketAngle = finishAngle;
                 }
             } else {
@@ -483,10 +500,30 @@ function main() {
                 }
             }
 
+
             rocketVelocity += step * ((((P * Math.cos(alpha)) - X) / m0) - (g0 * Math.sin(rocketAngle)))
             rocketSystem.position.x += step * rocketVelocity * Math.cos(rocketAngle)
             rocketSystem.position.y += step * rocketVelocity * Math.sin(rocketAngle)
             rocket.rotation.z = rocketAngle - 1.57
+
+
+            let point1 = new THREE.Vector3( rocketSystem.position.x, rocketSystem.position.y,  rocketSystem.position.z );
+            let point2 = new THREE.Vector3(rocketX, rocketY, rocketZ);
+
+            const lineGeometry = new THREE.BufferGeometry().setFromPoints([point1, point2]);
+            const lineMaterial = new THREE.LineBasicMaterial( { color: 'black' } );
+
+            trajectoryLine = new THREE.Line( lineGeometry, lineMaterial );
+            scene.add( trajectoryLine );
+
+            rocketX = rocketSystem.position.x;
+            rocketY = rocketSystem.position.y;
+            rocketZ = rocketSystem.position.z;
+
+
+
+
+
             camera.rotation.set(0, 0, 0)
 
             data.innerHTML =  `
@@ -496,27 +533,32 @@ function main() {
                 <div>&theta; - ${Math.round(rocketAngle * 100) / 100} рад</div>
                 <div>v - ${Math.round(rocketVelocity * 100) / 100} м/c</div>
                 <div>t - ${Math.round(time * 100) / 100} c</div>
-                <div>Тяга - ${Math.round(P * 100) / 100} H</div>
-                <div>Скорость звука - ${Math.round(a * 100) / 100} H</div>
             </div>
             `
+
+
+            if (m0 >= mk) {
+                m0 -= step *  mass_dot;
+                console.log(m0)
+            } else {
+                activePart = false;
+                console.log(m0)
+                rocket.remove(particleFireMesh0)
+                P = 0;
+            }
+
         }
 
-        if (m0 >= mk) {
-            m0 -= step *  mass_dot;
-        } else {
-            activePart = false;
-            rocket.remove(particleFireMesh0)
-            P = 0;
-        }
+
 
         if (rocketSystem.position.y > 95000 && !drawLine) {
+            const pi0 = 3.98 * Math.pow(10, 14);
             const points = [];
             points.push( new THREE.Vector3( rocketSystem.position.x, rocketSystem.position.y, 0 ) );
             points.push( new THREE.Vector3( 285000, -rad, 0 ) );
 
             const geometry = new THREE.BufferGeometry().setFromPoints( points );
-            const material = new THREE.LineBasicMaterial( { color: 0x0000ff } );
+            const material = new THREE.LineBasicMaterial( { color: 'black' } );
             line = new THREE.Line( geometry, material );
             scene.add( line );
 
@@ -524,17 +566,50 @@ function main() {
             drawLine = true
 
             let v = rocketVelocity / 1000
-            let l = 2 * rad * (Math.atan((Math.pow(v, 2) * Math.tan(rocketAngle)) / ((62.57 * (1 + (Math.pow(Math.tan(rocketAngle), 2))) - Math.pow(v, 2)))))
-            console.log(l)
-            console.log(rocketSystem.position.x + l)
+            const l = 2 * rad * (Math.atan((Math.pow(v, 2) * Math.tan(rocketAngle)) / ((62.57 * (1 + (Math.pow(Math.tan(rocketAngle), 2))) - Math.pow(v, 2)))))
+
+            vk = (Math.pow(rocketVelocity, 2) * (rad + rocketSystem.position.y)) / pi0;
+            beta = Math.atan((vk * Math.tan(rocketAngle)) / (1 + Math.pow(Math.tan(rocketAngle), 2) - vk));
+            focal = vk * (rad + rocketSystem.position.y) * Math.pow(Math.cos(rocketAngle), 2);
+            eccentricity = Math.sqrt((Math.pow(1 - vk, 2) * Math.pow(Math.cos(rocketAngle), 2)) + Math.pow(Math.sin(rocketAngle), 2));
+            const radVector = focal / (1 - (eccentricity * Math.cos(beta - (0.99 * beta)) ))
 
             const secondPoints = []
-            secondPoints.push( new THREE.Vector3( rocketSystem.position.x + l - 15000, 95000, 0 ) );
+            secondPoints.push( new THREE.Vector3( rocketSystem.position.x + l - 35000, 95000, 0 ) );
             secondPoints.push( new THREE.Vector3( 285000, -rad, 0 ) );
 
             const secondGeometry = new THREE.BufferGeometry().setFromPoints( secondPoints );
             secondLine = new THREE.Line( secondGeometry, material );
             scene.add( secondLine );
+
+            const thirdPoints = [];
+            thirdPoints.push( new THREE.Vector3( -300000, 95000, 0 ) )
+            thirdPoints.push(new THREE.Vector3( 700000, 95000, 0 ))
+            const dashedMaterial = new THREE.LineDashedMaterial( { color: 'black',
+                linewidth: 100,
+                scale: 1,
+                dashSize: 10000,
+                gapSize: 50000, } );
+            const thirdGeometry = new THREE.BufferGeometry().setFromPoints( thirdPoints );
+
+            dashedLine = new THREE.Line( thirdGeometry, dashedMaterial );
+            scene.add( dashedLine )
+
+
+        }
+
+        if (rocketSystem.position.y > 95000) {
+            activePartTime = false;
+
+            if (!ellipticPartTime) {
+                ellipticPartTime = true
+                ellipticTime = time;
+            }
+
+            if (time >= ellipticTime+3) {
+                tex.style.opacity = 1;
+                currentString = ellipticLatexString;
+            }
 
 
         }
@@ -543,6 +618,7 @@ function main() {
             scene.remove(line)
             scene.remove(secondLine)
             scene.remove(arrowHelper)
+            scene.remove(dashedLine)
             drawLine = true;
         }
 
@@ -556,12 +632,17 @@ function main() {
 
 
 
-            // TRAJECTORY DRAWING
-            // positionsArrays[positionIndex ++] = box.position.x;
-            // positionsArrays[positionIndex ++] = box.position.y;
-            // positionsArrays[positionIndex ++] = box.position.z;
-            //
-            // line.geometry.attributes.position.needsUpdate = true;
+        //     // TRAJECTORY DRAWING
+        // positionsArrays[positionIndex ++] = rocketSystem.position.x;
+        // positionsArrays[positionIndex ++] = rocketSystem.position.y;
+        // positionsArrays[positionIndex ++] = rocketSystem.position.z;
+        //
+        //
+        // let drawCount = positionsArrays.length / 3
+        // trajectoryLine.geometry.setDrawRange( 0, drawCount );
+        //
+        // trajectoryLine.geometry.attributes.position.needsUpdate = true;
+
 
         renderer.render(scene, currentCamera);
         requestAnimationFrame(render);
