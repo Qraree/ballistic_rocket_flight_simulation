@@ -9,17 +9,14 @@ html, body {
     display: block;
 }
 
-#start, #next-cam {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-
+#start, #next-cam, #nozzle-cam, #ellipsis-cam, #main-cam {
     background-color: #2184bd;
     color: white;
     padding: 5px;
     border: none;
     border-radius: 5px;
     cursor: pointer;
+    margin-right: 10px;
 
 }
 
@@ -36,7 +33,7 @@ html, body {
 
 .tex {
     position: absolute;
-    top: 350px;
+    top: 300px;
     left: 100px;
 
     color: black;
@@ -49,5 +46,13 @@ html, body {
     position: absolute;
     bottom: 10px;
     right: 10px;
+}
 
+.cameras {
+    position: absolute;
+    top:  10px;
+    left: 10px;
+
+    display: flex;
+    flex-direction: row;
 }
