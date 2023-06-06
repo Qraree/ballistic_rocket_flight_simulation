@@ -154,7 +154,9 @@ function main() {
     {
         const color = 0xFFFFFF;
         const intensity = 1;
-        const light = new THREE.AmbientLight(color, intensity);
+        const light = new THREE.DirectionalLight(color, intensity);
+        light.position.set(0, 1000, 1000);
+
         scene.add(light);
 
         const gui = new GUI();
@@ -208,6 +210,7 @@ function main() {
             requestAnimationFrame(render);
         });
     })
+
 
 
     const relativeTime = (time) => {
